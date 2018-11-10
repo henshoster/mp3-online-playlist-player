@@ -73,9 +73,9 @@ var Player = /** @class */ (function () {
     };
     Player.prototype.next = function (i) {
         if (i === void 0) { i = null; }
-        $("li[id=song_" + this.nowPlaying + "]")
-            .removeClass("font-weight-bold")
-            .addClass("reduce-opacity");
+        var li;
+        li = $("li[id=song_" + this.nowPlaying + "]");
+        li.removeClass("font-weight-bold").addClass("reduce-opacity");
         if (i != null) {
             this.nowPlaying = i;
         }
@@ -86,9 +86,13 @@ var Player = /** @class */ (function () {
             this.nowPlaying = 0;
         }
         this.pageTitle.html(this._name + " :: " + this._songs[this.nowPlaying].name);
-        $("li[id=song_" + this.nowPlaying + "]")
-            .addClass("font-weight-bold")
-            .removeClass("reduce-opacity");
+        li = $("li[id=song_" + this.nowPlaying + "]");
+        li.addClass("font-weight-bold").removeClass("reduce-opacity");
+        $("#song-now-playing-name").html("Now Playing: " + this._songs[this.nowPlaying].name);
+        li[0].scrollIntoView({
+            behavior: "smooth",
+            block: "end"
+        });
         this.myAmazingPlayer.src = this._songs[this.nowPlaying].url;
         this.myAmazingPlayer.load();
         this.myAmazingPlayer.play();
@@ -108,7 +112,7 @@ var Player = /** @class */ (function () {
                 songsNames += "<li class=\"font-weight-bold \" id='song_" + i + "' onclick='player.next(" + i + ")'>" + row.name + "</li>";
             }
         }
-        var playerTemplate = "\n    <div class=\"col-md-6 row my-3 border \">\n    <div class=\"col-4 align-self-center\">\n      <img id=\"playerImg\" src=\"" + this._image + "\" class=\"rounded-circle\">\n      <i id=\"playIcon\" class=\"fas fa-play-circle fa-2x\" onclick='player.play(event)'></i>\n      <i id=\"pauseIcon\" class=\"displayNone far fa-pause-circle fa-2x\" onclick='player.pause(event)'></i>\n    </div>\n    <div class=\"col-7 align-self-center\">\n      <audio src='" + this._songs[this.nowPlaying].url + "' id='myAmazingPlayer' controls onended=\"player.next()\">\n       \n      </audio>\n      <ol>\n        <span class=\"lead font-weight-bold\">Now Playing: " + this._songs[this.nowPlaying].name + "</span>\n        " + songsNames + "\n      </ol>\n    </div>\n    <div class=\"col-1 btns\">\n      <i class=\"far fa-times-circle fa-2x\" onclick=\"deletePlaylist(event," + this._id + ")\"></i>\n      <i class=\"fas fa-pen-square fa-2x\" onclick=\"loadStepOneModal(" + this._id + ")\"></i>  \n    </div>\n  </div>\n    ";
+        var playerTemplate = "\n    <div class=\"col-md-6 row my-3 border \">\n    <div class=\"col-4 align-self-center\">\n      <img id=\"playerImg\" src=\"" + this._image + "\" class=\"rounded-circle\">\n      <i id=\"playIcon\" class=\"fas fa-play-circle fa-2x\" onclick='player.play(event)'></i>\n      <i id=\"pauseIcon\" class=\"displayNone far fa-pause-circle fa-2x\" onclick='player.pause(event)'></i>\n    </div>\n    <div class=\"col-7 align-self-center\">\n      <audio src='" + this._songs[this.nowPlaying].url + "' id='myAmazingPlayer' controls onended=\"player.next()\">\n       \n      </audio>\n      <ol>\n        <span id=\"song-now-playing-name\" class=\"font-weight-bold\">Now Playing: " + this._songs[this.nowPlaying].name + "</span>\n        " + songsNames + "\n      </ol>\n    </div>\n    <div class=\"col-1 btns\">\n      <i class=\"far fa-times-circle fa-2x\" onclick=\"deletePlaylist(event," + this._id + ")\"></i>\n      <i class=\"fas fa-pen-square fa-2x\" onclick=\"loadStepOneModal(" + this._id + ")\"></i>  \n    </div>\n  </div>\n    ";
         var playerContainer = $("#playerContainer");
         playerContainer.fadeOut(0);
         playerContainer.children().remove();

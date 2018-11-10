@@ -74,9 +74,9 @@ class Player {
     }
   }
   next(i = null) {
-    $(`li[id=song_${this.nowPlaying}]`)
-      .removeClass("font-weight-bold")
-      .addClass("reduce-opacity");
+    let li;
+    li = $(`li[id=song_${this.nowPlaying}]`);
+    li.removeClass("font-weight-bold").addClass("reduce-opacity");
     if (i != null) {
       this.nowPlaying = i;
     } else if (this.nowPlaying + 1 < this._songs.length) {
@@ -87,9 +87,15 @@ class Player {
     this.pageTitle.html(
       `${this._name} :: ${this._songs[this.nowPlaying].name}`
     );
-    $(`li[id=song_${this.nowPlaying}]`)
-      .addClass("font-weight-bold")
-      .removeClass("reduce-opacity");
+    li = $(`li[id=song_${this.nowPlaying}]`);
+    li.addClass("font-weight-bold").removeClass("reduce-opacity");
+    $("#song-now-playing-name").html(
+      `Now Playing: ${this._songs[this.nowPlaying].name}`
+    );
+    li[0].scrollIntoView({
+      behavior: "smooth",
+      block: "end"
+    });
     this.myAmazingPlayer.src = this._songs[this.nowPlaying].url;
     this.myAmazingPlayer.load();
     this.myAmazingPlayer.play();
@@ -127,7 +133,7 @@ class Player {
        
       </audio>
       <ol>
-        <span class="lead font-weight-bold">Now Playing: ${
+        <span id="song-now-playing-name" class="font-weight-bold">Now Playing: ${
           this._songs[this.nowPlaying].name
         }</span>
         ${songsNames}
