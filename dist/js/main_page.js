@@ -1,7 +1,7 @@
 "use strict";
 // create new simple tooltop (for searchField) , @arg1 : Jquery element (as a container for tooltip),@arg2 : tooltip text to be presented
 var tooltip = new Tooltip($("#searchField"), "Please enter at least<br><u><b>2</b> Characters</u>");
-// @const allPlayLists contains array of all playlists from DB
+// @let allPlayLists contains array of all playlists from DB
 var allPlaylists = [];
 Playlist.getAllPlaylists(allPlaylists);
 //@const player - create singletone player class to be used to play playlists

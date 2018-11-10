@@ -1,3 +1,4 @@
+//@class Tooltip -> build bootstrap tooltip on element
 class Tooltip {
   private container: JQuery<Element>;
   constructor(container: JQuery<Element>, title: string) {

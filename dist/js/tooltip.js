@@ -1,4 +1,5 @@
 "use strict";
+//@class Tooltip -> build bootstrap tooltip on element
 var Tooltip = /** @class */ (function () {
     function Tooltip(container, title) {
         this.container = container;

@@ -1,4 +1,5 @@
 "use strict";
+//class Player - singletone
 var Player = /** @class */ (function () {
     function Player() {
         // --------------End of Singleton logic-------------------//

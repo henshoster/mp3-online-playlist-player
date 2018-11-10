@@ -1,3 +1,4 @@
+//class Player - singletone
 class Player {
   //---------Singleton logic---------------------//
   private static _instance: Player = new Player();

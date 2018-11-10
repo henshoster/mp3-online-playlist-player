@@ -4,8 +4,8 @@ const tooltip = new Tooltip(
   "Please enter at least<br><u><b>2</b> Characters</u>"
 );
 
-// @const allPlayLists contains array of all playlists from DB
-const allPlaylists: Playlist[] = [];
+// @let allPlayLists contains array of all playlists from DB
+let allPlaylists: Playlist[] = [];
 Playlist.getAllPlaylists(allPlaylists);
 
 //@const player - create singletone player class to be used to play playlists

@@ -1,4 +1,11 @@
 "use strict";
+/* class Playlist
+@params:
+  @private _id: string = playlist id
+  @private _name: string = playlist name
+  @private _image: string = playlist url to image
+  @private _songs: Song[]= array of songs for the playlist
+*/
 var Playlist = /** @class */ (function () {
     function Playlist(id, name, image, songs) {
         if (songs === void 0) { songs = []; }
@@ -56,7 +63,6 @@ var Playlist = /** @class */ (function () {
                     var lastPl = new Playlist(row.id, row.name, row.image);
                     lastPl.drawPlaylist();
                     allPlaylists.push(lastPl);
-                    // allPlaylists[row.id] = lastPl;
                 });
             },
             error: function (error) {
@@ -88,9 +94,9 @@ var Playlist = /** @class */ (function () {
             method: "DELETE",
             url: "http://localhost/playlist/api/playlist/" + id,
             success: function (response) {
-                console.log(response.success);
                 if (response.success == true) {
-                    delete allPlaylists[Number(id)];
+                    var filteredRemovedArr = allPlaylists.filter(function (album) { return album.id != id; });
+                    allPlaylists = filteredRemovedArr;
                     $("div[id=" + id + "]").remove();
                     $("#delete_modal").modal("hide");
                     if (player.id == id) {
