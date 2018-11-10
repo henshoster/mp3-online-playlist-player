@@ -1,3 +1,10 @@
+/* class Playlist
+@params:
+  @private _id: string = playlist id
+  @private _name: string = playlist name
+  @private _image: string = playlist url to image
+  @private _songs: Song[]= array of songs for the playlist
+*/
 class Playlist {
   private _id: string;
   private _name: string;
@@ -47,7 +54,6 @@ class Playlist {
           const lastPl: Playlist = new Playlist(row.id, row.name, row.image);
           lastPl.drawPlaylist();
           allPlaylists.push(lastPl);
-          // allPlaylists[row.id] = lastPl;
         });
       },
       error: function(error) {
@@ -80,9 +86,11 @@ class Playlist {
       method: "DELETE",
       url: `http://localhost/playlist/api/playlist/${id}`,
       success: function(response) {
-        console.log(response.success);
         if (response.success == true) {
-          delete allPlaylists[Number(id)];
+          const filteredRemovedArr: Playlist[] = allPlaylists.filter(
+            album => album.id != id
+          );
+          allPlaylists = filteredRemovedArr;
           $(`div[id=${id}]`).remove();
           $("#delete_modal").modal("hide");
           if (player.id == id) {
