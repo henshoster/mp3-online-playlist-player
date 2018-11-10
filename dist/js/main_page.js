@@ -1,15 +1,21 @@
 "use strict";
-var searchField = $("#searchField");
-var tooltip = new Tooltip(searchField, "Please enter at least<br><u><b>2</b> Characters</u>");
+// create new simple tooltop (for searchField) , @arg1 : Jquery element (as a container for tooltip),@arg2 : tooltip text to be presented
+var tooltip = new Tooltip($("#searchField"), "Please enter at least<br><u><b>2</b> Characters</u>");
+// @const allPlayLists contains array of all playlists from DB
 var allPlaylists = [];
 Playlist.getAllPlaylists(allPlaylists);
-console.log(allPlaylists);
+//@const player - create singletone player class to be used to play playlists
 var player = Player.getInstance();
-//filter playlists by search
+//filter playlists view on screen by search, changes on input event
+//@param e : Input Event
 function search(e) {
+    // @const inputValue : user input on search field
     var inputValue = e.target.value;
+    // @const filteredArr : all the playlists that are goin to match to user input on search field
     var filteredArr = allPlaylists.filter(function (album) { return album.name.indexOf(inputValue) != -1; });
+    // @const allPlContainter - playlists container in html
     var allPlContainter = $("#albums_list");
+    //search algoritm logic
     if (inputValue.length > 1) {
         if (filteredArr.length != 0) {
             tooltip.dispose();
@@ -38,21 +44,25 @@ function search(e) {
         tooltip.editTitle("Please enter at least<br><u><b>2</b> Characters</u>");
     }
 }
+//return specific Playlist from allPlaylistst:Playlist[] filtered by id
 function returnPlById(id) {
     var temp = allPlaylists.filter(function (album) { return album.id.indexOf(id) != -1; });
     return temp[0];
 }
 // build and loads player --- player is singletone
 function loadPlayer(id) {
+    //@var waitingForDataToUpdate : deferred ---> resolve when playlist have songs loaded
     var waitingForDataToUpdate = $.Deferred();
-    // const playlistToPlay = allPlaylists[Number(id)];
+    //@const playlistToPlay : selected playlist to be played
     var playlistToPlay = returnPlById(id);
+    //if songs already loaded -> resolve , else -> get songs
     if (playlistToPlay.songs[0]) {
         waitingForDataToUpdate.resolve();
     }
     else {
         playlistToPlay.getSongs(waitingForDataToUpdate);
     }
+    //when songs are loaded -> reinit player and build it.
     $.when(waitingForDataToUpdate).done(function () {
         player.id = id;
         player.image = playlistToPlay.image;
@@ -67,15 +77,19 @@ function loadPlayer(id) {
 }
 //loads step one modal
 function loadStepOneModal(id) {
-    if (player.id == id) {
-        player.pause();
-    }
-    $("#step_one_modal .modal-footer button:nth-child(2)").trigger("click");
     var loadSteoTwoBtn = $("#loadStepTwoModalBtn");
     var stepOneModalTitle = $("#stepOneModalTitle");
     var stepTwoModalTitle = $("#stepTwoModalTitle");
     var finishAndSaveBtn = $("#finishAndSaveBtn");
     var playListToLoad = returnPlById(id);
+    //if edited playlist is playing right now->pause it
+    if (player.id == id) {
+        player.pause();
+    }
+    //!!!Reset Modal!!!
+    $("#step_one_modal .modal-footer button:nth-child(2)").trigger("click");
+    //if editing existing playlist --> load updated info and change view to edit mode.
+    //else -> keep empty and change view to add new mode
     if (id != "0") {
         $("#playlist_name").val(playListToLoad.name);
         $("#playlist_url").val(playListToLoad.image);
@@ -95,22 +109,23 @@ function loadStepOneModal(id) {
     finishAndSaveBtn.attr("onclick", "validateModalStepTwo(event," + id + ")");
     $("#step_one_modal").modal("show");
 }
-// before load step two modal validate if inputs are not empty
+// before load step two modal validate if inputs from step one are not empty and valid
 function loadStepTwoModal(e, id) {
-    var playlistName = $(e.toElement)
-        .parents(".modal-content")
-        .find("#playlist_name");
-    var playlistUrl = $(e.toElement)
-        .parents(".modal-content")
-        .find("#playlist_url");
+    var playlistName = $("#playlist_name");
+    var playlistUrl = $("#playlist_url");
+    //input validation
     if (playlistName.val() == "") {
         playlistName.focus();
     }
     else if (!checkUrlExtension(String(playlistUrl.val()), "img")) {
         playlistUrl.focus();
     }
+    // else:  passed! validation:
     else {
+        //@var waitingForDataToUpdate : deferred ---> resolve when playlist have songs loaded
         var waitingForDataToUpdate = $.Deferred();
+        //if editing existing playlist --> update playlist and load songs if not already loaded,also update player with changes
+        //else -> adding new playlist->continue
         if (id != "0") {
             var plToUpdate = returnPlById(id);
             plToUpdate.name = String(playlistName.val());
@@ -127,6 +142,7 @@ function loadStepTwoModal(e, id) {
             waitingForDataToUpdate.resolve();
         }
         $.when(waitingForDataToUpdate).done(function () {
+            // on edit:building existing songs row on step two modal container
             if (id != "0") {
                 var songRows = $("#step_two_modal .row");
                 songRows.remove();
@@ -142,13 +158,11 @@ function loadStepTwoModal(e, id) {
         });
     }
 }
-// changes image preview on step one modal
+// if passed validation : changes image preview on step one modal
 // @this = #playlist_url input
 $("#playlist_url").on("input", function () {
     var playlistUrl = String($(this).val());
-    var imgPreviewSrc = $(this)
-        .parents(".modal-body")
-        .find("img");
+    var imgPreviewSrc = $("#step_one_modal_img");
     if (checkUrlExtension(playlistUrl, "img")) {
         $(this).removeClass("inputRedWarning");
         imgPreviewSrc.attr("src", playlistUrl);
@@ -160,40 +174,33 @@ $("#playlist_url").on("input", function () {
 });
 //step one modal reset fields btn (also reset step 2 fields)
 function resetFields(e) {
-    var playlistName = $(e.target)
-        .parents(".modal-content")
-        .find("#playlist_name");
-    var playlistUrl = $(e.target)
-        .parents(".modal-content")
-        .find("#playlist_url");
-    var imgPreviewSrc = $(e.target)
-        .parents(".modal-content")
-        .find("img");
-    var stepTwoModal = $("#modals_container")
-        .find("#step_two_modal")
-        .find(".modal-body");
+    var playlistName = $("#playlist_name");
+    var playlistUrl = $("#playlist_url");
+    var imgPreviewSrc = $("#step_one_modal_img");
+    var stepTwoModal = $("#step-two-modal-body");
     var songRows = stepTwoModal.find(".row");
     songRows.remove();
     for (var numOfRowsSoFar = 0; numOfRowsSoFar < 3; numOfRowsSoFar++) {
-        var newRowTemplate = "\n  <div class=\"form-group row my-1\">\n    <label for=\"song_url_" + numOfRowsSoFar + "\" class=\"col-sm-2 col-form-label col-form-label-sm\">SongURL</label>\n    <div class=\"col-sm-5\">\n      <input type=\"text\" class=\"form-control form-control-sm\" id=\"song_url_" + numOfRowsSoFar + "\" oninput=\"validateExt(event)\">\n    </div>\n    <label for=\"song_name_" + numOfRowsSoFar + "\" class=\"col-sm-1 col-form-label col-form-label-sm\">Name</label>\n    <div class=\"col-sm-4\">\n      <input type=\"text\" class=\"form-control form-control-sm\" id=\"song_name_" + numOfRowsSoFar + "\">\n    </div>\n  </div>\n";
-        stepTwoModal.append(newRowTemplate);
+        addAnotherSong();
     }
     playlistName.val("");
     playlistUrl.val("");
     playlistUrl.removeClass("inputRedWarning");
     imgPreviewSrc.attr("src", "images/preview.jpg");
 }
+//building new row template for step two modal
+//@params: numOfRowsSoFar = counting rows,url?=url to inject to input,name?=name of playlist to inject
+function buildNewRowTemplate(numOfRowsSoFar, url, name) {
+    return "\n  <div class=\"form-group row my-1\">\n    <label for=\"song_url_" + numOfRowsSoFar + "\" class=\"col-sm-2 col-form-label col-form-label-sm\">SongURL</label>\n    <div class=\"col-sm-5\">\n      <input value=\"" + (url ? url : "") + "\" type=\"text\" class=\"form-control form-control-sm\" id=\"song_url_" + numOfRowsSoFar + "\" oninput=\"validateExt(event)\">\n    </div>\n    <label for=\"song_name_" + numOfRowsSoFar + "\" class=\"col-sm-1 col-form-label col-form-label-sm\">Name</label>\n    <div class=\"col-sm-4\">\n      <input value=\"" + (name ? name : "") + "\" type=\"text\" class=\"form-control form-control-sm\" id=\"song_name_" + numOfRowsSoFar + "\">\n    </div>\n  </div>\n";
+}
 //step two modal - > adds new row (to be able to add more songs)
 function addAnotherSong(name, url) {
-    if (name === void 0) { name = ""; }
-    if (url === void 0) { url = ""; }
-    var modalBody = $("#step_two_modal .modal-body");
+    var modalBody = $("#step-two-modal-body");
     var numOfRowsSoFar = modalBody.children().length;
-    var newRowTemplate = "\n  <div class=\"form-group row my-1\">\n    <label for=\"song_url_" + numOfRowsSoFar + "\" class=\"col-sm-2 col-form-label col-form-label-sm\">SongURL</label>\n    <div class=\"col-sm-5\">\n      <input value=\"" + url + "\" type=\"text\" class=\"form-control form-control-sm\" id=\"song_url_" + numOfRowsSoFar + "\" oninput=\"validateExt(event)\">\n    </div>\n    <label for=\"song_name_" + numOfRowsSoFar + "\" class=\"col-sm-1 col-form-label col-form-label-sm\">Name</label>\n    <div class=\"col-sm-4\">\n      <input value=\"" + name + "\" type=\"text\" class=\"form-control form-control-sm\" id=\"song_name_" + numOfRowsSoFar + "\">\n    </div>\n  </div>\n";
+    var newRowTemplate = buildNewRowTemplate(numOfRowsSoFar, url, name);
     modalBody.append(newRowTemplate);
 }
 //validate mp3 ext on songsURL
-// e is declared as any because typescript does not have inputEvent -- > will be fixed latter
 function validateExt(e) {
     var thisSongInput = e.target;
     var thisSongInputVal = String($(thisSongInput).val());
@@ -208,9 +215,7 @@ function validateExt(e) {
 function validateModalStepTwo(e, id) {
     var isValid = true;
     var isThereIsAtLeastOneRow = false;
-    var inputs = $(e.toElement)
-        .parents("#step_two_modal")
-        .find("input");
+    var inputs = $("#step_two_modal input");
     for (var i = 0; i < inputs.length - 1; i = i + 2) {
         var songUrlInput = $(inputs[i]);
         var nameInput = $(inputs[i + 1]);
@@ -249,9 +254,8 @@ function validateModalStepTwo(e, id) {
         $(inputs[0]).focus();
     }
 }
+// creates new playlist, or update songs of existing one
 function createNewPlaylistOrUpdateExistingPlaylist(id) {
-    var name = String($("#playlist_name").val());
-    var image = String($("#playlist_url").val());
     var rowsOfSongs = $("#step_two_modal .row");
     var songs = [];
     rowsOfSongs.each(function () {
@@ -273,10 +277,13 @@ function createNewPlaylistOrUpdateExistingPlaylist(id) {
         }
     }
     else {
-        var newPlaylist = new Playlist(id, name, image, songs);
+        var name_2 = String($("#playlist_name").val());
+        var image = String($("#playlist_url").val());
+        var newPlaylist = new Playlist(id, name_2, image, songs);
         Playlist.createNewPlaylist(newPlaylist, allPlaylists);
     }
 }
+//loads delete modal with correct information
 function deletePlaylist(event, id) {
     var deleteModal = $("#delete_modal");
     deleteModal

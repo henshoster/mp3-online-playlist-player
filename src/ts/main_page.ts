@@ -1,20 +1,28 @@
-const searchField = $("#searchField");
+// create new simple tooltop (for searchField) , @arg1 : Jquery element (as a container for tooltip),@arg2 : tooltip text to be presented
 const tooltip = new Tooltip(
-  searchField,
+  $("#searchField"),
   "Please enter at least<br><u><b>2</b> Characters</u>"
 );
+
+// @const allPlayLists contains array of all playlists from DB
 const allPlaylists: Playlist[] = [];
 Playlist.getAllPlaylists(allPlaylists);
-console.log(allPlaylists);
+
+//@const player - create singletone player class to be used to play playlists
 const player = Player.getInstance();
 
-//filter playlists by search
+//filter playlists view on screen by search, changes on input event
+//@param e : Input Event
 function search(e: any) {
+  // @const inputValue : user input on search field
   const inputValue: string = e.target.value;
+  // @const filteredArr : all the playlists that are goin to match to user input on search field
   const filteredArr: Playlist[] = allPlaylists.filter(
     album => album.name.indexOf(inputValue) != -1
   );
+  // @const allPlContainter - playlists container in html
   const allPlContainter = $("#albums_list");
+  //search algoritm logic
   if (inputValue.length > 1) {
     if (filteredArr.length != 0) {
       tooltip.dispose();
@@ -43,6 +51,7 @@ function search(e: any) {
   }
 }
 
+//return specific Playlist from allPlaylistst:Playlist[] filtered by id
 function returnPlById(id: string): Playlist {
   const temp: Playlist[] = allPlaylists.filter(
     album => album.id.indexOf(id) != -1
@@ -52,15 +61,17 @@ function returnPlById(id: string): Playlist {
 
 // build and loads player --- player is singletone
 function loadPlayer(id: string) {
+  //@var waitingForDataToUpdate : deferred ---> resolve when playlist have songs loaded
   let waitingForDataToUpdate = $.Deferred();
-  // const playlistToPlay = allPlaylists[Number(id)];
-
+  //@const playlistToPlay : selected playlist to be played
   const playlistToPlay: Playlist = returnPlById(id);
+  //if songs already loaded -> resolve , else -> get songs
   if (playlistToPlay.songs[0]) {
     waitingForDataToUpdate.resolve();
   } else {
     playlistToPlay.getSongs(waitingForDataToUpdate);
   }
+  //when songs are loaded -> reinit player and build it.
   $.when(waitingForDataToUpdate).done(() => {
     player.id = id;
     player.image = playlistToPlay.image;
@@ -76,15 +87,19 @@ function loadPlayer(id: string) {
 
 //loads step one modal
 function loadStepOneModal(id: string) {
-  if (player.id == id) {
-    player.pause();
-  }
-  $("#step_one_modal .modal-footer button:nth-child(2)").trigger("click");
   const loadSteoTwoBtn = $("#loadStepTwoModalBtn");
   const stepOneModalTitle = $("#stepOneModalTitle");
   const stepTwoModalTitle = $("#stepTwoModalTitle");
   const finishAndSaveBtn = $("#finishAndSaveBtn");
   const playListToLoad: Playlist = returnPlById(id);
+  //if edited playlist is playing right now->pause it
+  if (player.id == id) {
+    player.pause();
+  }
+  //!!!Reset Modal!!!
+  $("#step_one_modal .modal-footer button:nth-child(2)").trigger("click");
+  //if editing existing playlist --> load updated info and change view to edit mode.
+  //else -> keep empty and change view to add new mode
   if (id != "0") {
     $("#playlist_name").val(playListToLoad.name);
     $("#playlist_url").val(playListToLoad.image);
@@ -103,23 +118,24 @@ function loadStepOneModal(id: string) {
   finishAndSaveBtn.attr("onclick", `validateModalStepTwo(event,${id})`);
   $("#step_one_modal").modal("show");
 }
-// before load step two modal validate if inputs are not empty
+// before load step two modal validate if inputs from step one are not empty and valid
 function loadStepTwoModal(e: MouseEvent, id: string) {
-  const playlistName: JQuery<Element> = $(e.toElement)
-    .parents(".modal-content")
-    .find("#playlist_name");
-  const playlistUrl: JQuery<Element> = $(e.toElement)
-    .parents(".modal-content")
-    .find("#playlist_url");
+  const playlistName: JQuery<Element> = $("#playlist_name");
+  const playlistUrl: JQuery<Element> = $("#playlist_url");
+  //input validation
   if (playlistName.val() == "") {
     playlistName.focus();
   } else if (!checkUrlExtension(String(playlistUrl.val()), "img")) {
     playlistUrl.focus();
-  } else {
+  }
+  // else:  passed! validation:
+  else {
+    //@var waitingForDataToUpdate : deferred ---> resolve when playlist have songs loaded
     let waitingForDataToUpdate = $.Deferred();
+    //if editing existing playlist --> update playlist and load songs if not already loaded,also update player with changes
+    //else -> adding new playlist->continue
     if (id != "0") {
       const plToUpdate: Playlist = returnPlById(id);
-
       plToUpdate.name = String(playlistName.val());
       plToUpdate.image = String(playlistUrl.val());
       plToUpdate.updatePlaylist();
@@ -133,6 +149,7 @@ function loadStepTwoModal(e: MouseEvent, id: string) {
       waitingForDataToUpdate.resolve();
     }
     $.when(waitingForDataToUpdate).done(() => {
+      // on edit:building existing songs row on step two modal container
       if (id != "0") {
         const songRows: JQuery<Element> = $("#step_two_modal .row");
         songRows.remove();
@@ -152,13 +169,11 @@ function loadStepTwoModal(e: MouseEvent, id: string) {
     });
   }
 }
-// changes image preview on step one modal
+// if passed validation : changes image preview on step one modal
 // @this = #playlist_url input
 $("#playlist_url").on("input", function() {
   const playlistUrl: string = String($(this).val());
-  const imgPreviewSrc: JQuery = $(this)
-    .parents(".modal-body")
-    .find("img");
+  const imgPreviewSrc: JQuery = $("#step_one_modal_img");
   if (checkUrlExtension(playlistUrl, "img")) {
     $(this).removeClass("inputRedWarning");
     imgPreviewSrc.attr("src", playlistUrl);
@@ -170,61 +185,54 @@ $("#playlist_url").on("input", function() {
 
 //step one modal reset fields btn (also reset step 2 fields)
 function resetFields(e: any) {
-  const playlistName: JQuery<Element> = $(e.target)
-    .parents(".modal-content")
-    .find("#playlist_name");
-  const playlistUrl: JQuery<Element> = $(e.target)
-    .parents(".modal-content")
-    .find("#playlist_url");
-  const imgPreviewSrc: JQuery<Element> = $(e.target)
-    .parents(".modal-content")
-    .find("img");
-  const stepTwoModal: JQuery<Element> = $("#modals_container")
-    .find("#step_two_modal")
-    .find(".modal-body");
+  const playlistName: JQuery<Element> = $("#playlist_name");
+  const playlistUrl: JQuery<Element> = $("#playlist_url");
+  const imgPreviewSrc: JQuery<Element> = $("#step_one_modal_img");
+  const stepTwoModal: JQuery<Element> = $("#step-two-modal-body");
   const songRows: JQuery<Element> = stepTwoModal.find(".row");
   songRows.remove();
   for (let numOfRowsSoFar = 0; numOfRowsSoFar < 3; numOfRowsSoFar++) {
-    const newRowTemplate: string = `
-  <div class="form-group row my-1">
-    <label for="song_url_${numOfRowsSoFar}" class="col-sm-2 col-form-label col-form-label-sm">SongURL</label>
-    <div class="col-sm-5">
-      <input type="text" class="form-control form-control-sm" id="song_url_${numOfRowsSoFar}" oninput="validateExt(event)">
-    </div>
-    <label for="song_name_${numOfRowsSoFar}" class="col-sm-1 col-form-label col-form-label-sm">Name</label>
-    <div class="col-sm-4">
-      <input type="text" class="form-control form-control-sm" id="song_name_${numOfRowsSoFar}">
-    </div>
-  </div>
-`;
-    stepTwoModal.append(newRowTemplate);
+    addAnotherSong();
   }
-
   playlistName.val("");
   playlistUrl.val("");
   playlistUrl.removeClass("inputRedWarning");
   imgPreviewSrc.attr("src", "images/preview.jpg");
 }
-//step two modal - > adds new row (to be able to add more songs)
-function addAnotherSong(name: string = "", url: string = "") {
-  const modalBody: JQuery<Element> = $("#step_two_modal .modal-body");
-  const numOfRowsSoFar: number = modalBody.children().length;
-  const newRowTemplate: string = `
+
+//building new row template for step two modal
+//@params: numOfRowsSoFar = counting rows,url?=url to inject to input,name?=name of playlist to inject
+function buildNewRowTemplate(
+  numOfRowsSoFar: number,
+  url?: string,
+  name?: string
+): string {
+  return `
   <div class="form-group row my-1">
     <label for="song_url_${numOfRowsSoFar}" class="col-sm-2 col-form-label col-form-label-sm">SongURL</label>
     <div class="col-sm-5">
-      <input value="${url}" type="text" class="form-control form-control-sm" id="song_url_${numOfRowsSoFar}" oninput="validateExt(event)">
+      <input value="${
+        url ? url : ""
+      }" type="text" class="form-control form-control-sm" id="song_url_${numOfRowsSoFar}" oninput="validateExt(event)">
     </div>
     <label for="song_name_${numOfRowsSoFar}" class="col-sm-1 col-form-label col-form-label-sm">Name</label>
     <div class="col-sm-4">
-      <input value="${name}" type="text" class="form-control form-control-sm" id="song_name_${numOfRowsSoFar}">
+      <input value="${
+        name ? name : ""
+      }" type="text" class="form-control form-control-sm" id="song_name_${numOfRowsSoFar}">
     </div>
   </div>
 `;
+}
+
+//step two modal - > adds new row (to be able to add more songs)
+function addAnotherSong(name?: string, url?: string) {
+  const modalBody: JQuery<Element> = $("#step-two-modal-body");
+  const numOfRowsSoFar: number = modalBody.children().length;
+  const newRowTemplate: string = buildNewRowTemplate(numOfRowsSoFar, url, name);
   modalBody.append(newRowTemplate);
 }
 //validate mp3 ext on songsURL
-// e is declared as any because typescript does not have inputEvent -- > will be fixed latter
 function validateExt(e: any) {
   const thisSongInput: EventTarget = e.target;
   const thisSongInputVal: string = String($(thisSongInput).val());
@@ -238,9 +246,7 @@ function validateExt(e: any) {
 function validateModalStepTwo(e: MouseEvent, id: string) {
   let isValid: boolean = true;
   let isThereIsAtLeastOneRow = false;
-  const inputs: JQuery<Element> = $(e.toElement)
-    .parents("#step_two_modal")
-    .find("input");
+  const inputs: JQuery<Element> = $("#step_two_modal input");
   for (let i: number = 0; i < inputs.length - 1; i = i + 2) {
     const songUrlInput: JQuery<Element> = $(inputs[i]);
     const nameInput: JQuery<Element> = $(inputs[i + 1]);
@@ -277,9 +283,8 @@ function validateModalStepTwo(e: MouseEvent, id: string) {
   }
 }
 
+// creates new playlist, or update songs of existing one
 function createNewPlaylistOrUpdateExistingPlaylist(id: string) {
-  const name: string = String($("#playlist_name").val());
-  const image: string = String($("#playlist_url").val());
   const rowsOfSongs: JQuery<HTMLElement> = $("#step_two_modal .row");
   const songs: Song[] = [];
   rowsOfSongs.each(function() {
@@ -300,11 +305,13 @@ function createNewPlaylistOrUpdateExistingPlaylist(id: string) {
       player.buildPlayer();
     }
   } else {
+    const name: string = String($("#playlist_name").val());
+    const image: string = String($("#playlist_url").val());
     const newPlaylist = new Playlist(id, name, image, songs);
     Playlist.createNewPlaylist(newPlaylist, allPlaylists);
   }
 }
-
+//loads delete modal with correct information
 function deletePlaylist(event: MouseEvent, id: string) {
   const deleteModal = $("#delete_modal");
   deleteModal
