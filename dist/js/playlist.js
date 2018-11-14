@@ -172,7 +172,7 @@ var Playlist = /** @class */ (function () {
         var template = "\n    <div class='col-md-3 album-col my-3' id='" + this._id + "'>\n      <h3>" + this._name + "</h3>\n      <img src=\"" + this._image + "\">\n      <i class=\"far fa-times-circle fa-2x\" onclick=\"deletePlaylist(event," + this._id + ")\"></i>\n      <i class=\"fas fa-pen-square fa-2x\" onclick=\"loadStepOneModal(" + this._id + ")\"></i>\n      <i class=\"fas fa-play-circle fa-3x\" onclick=\"loadPlayer(" + this._id + ")\"></i>\n    </div>\n    ";
         albumsContainer.append(template);
         var thisDivAppended = $("div[id=" + this._id + "] h3")[0];
-        new CircleType(thisDivAppended).radius(220);
+        new CircleType(thisDivAppended).radius(170);
     };
     return Playlist;
 }());

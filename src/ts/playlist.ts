@@ -177,6 +177,6 @@ class Playlist {
     `;
     albumsContainer.append(template);
     const thisDivAppended = $(`div[id=${this._id}] h3`)[0];
-    new CircleType(thisDivAppended).radius(220);
+    new CircleType(thisDivAppended).radius(170);
   }
 }
